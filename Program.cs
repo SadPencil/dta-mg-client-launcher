@@ -22,6 +22,15 @@ internal sealed class Program
 
     private const int ERROR_CANCELLED_CODE = 1223;
 
+#if NETFRAMEWORK
+    private static bool? _isMono;
+
+    /// <summary>
+    /// Gets a value whether or not the application is running under Mono. Uses lazy loading and caching.
+    /// </summary>
+    private static bool IsMono => _isMono ??= Type.GetType("Mono.Runtime") != null;
+#endif
+
     #region .NET Framework Registry Keys
     // https://learn.microsoft.com/en-us/dotnet/framework/migration-guide/how-to-determine-which-versions-are-installed#detect-net-framework-45-and-later-versions
     // private const int NET_FRAMEWORK_4_5_RELEASE_KEY = 378389;
@@ -218,8 +227,11 @@ internal sealed class Program
             return OSVersion.WIN7;
         }
 
-        int p = (int)Environment.OSVersion.Platform;
+        if (IsMono)
+            return OSVersion.UNIX;
 
+        // http://mono.wikia.com/wiki/Detecting_the_execution_platform
+        int p = (int)Environment.OSVersion.Platform;
         if (p is 4 or 6 or 128)
         {
             return OSVersion.UNIX;
