@@ -185,7 +185,7 @@ internal sealed class Program
     private static void RunUGL()
     {
         Debug.Assert(!NetFrameworkEnabled);
-        NetFrameworkEnabled = true;
+        NetFrameworkEnabled = false;
         StartProcessDotNet(Resources + Path.DirectorySeparatorChar + DotNetBinariesFolder + Path.DirectorySeparatorChar + "UniversalGL" + Path.DirectorySeparatorChar + "clientogl.dll", run32Bit: false, runDesktop: false);
     }
 
