@@ -8,7 +8,7 @@ The launcher itself relies on .NET Framework 4.0.
 ## Optional arguments
 
 ### Flag arguments
-Prefer .NET 8 clients in favor of .NET Framework 4.8 clients:
+Prefer .NET 8 clients to .NET Framework 4.8 clients:
 ```
 -NET8
 ```
