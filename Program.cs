@@ -31,6 +31,9 @@ internal sealed class Program
     private static bool IsMono => _isMono ??= Type.GetType("Mono.Runtime") != null;
 #endif
 
+    private static OSVersion? _currentOSVersion = null;
+    public static OSVersion CurrentOSVersion = _currentOSVersion ??= GetOperatingSystemVersion();
+
     #region .NET Framework Registry Keys
     // https://learn.microsoft.com/en-us/dotnet/framework/migration-guide/how-to-determine-which-versions-are-installed#detect-net-framework-45-and-later-versions
     // private const int NET_FRAMEWORK_4_5_RELEASE_KEY = 378389;
@@ -73,7 +76,10 @@ internal sealed class Program
         bool installed = IsDotNet4Installed(NET_FRAMEWORK_4_8_RELEASE_KEY);
         if (!installed)
         {
-            ShowMissingComponent("'.NET Framework 4.8.1'", NetFrameworkDownloadLink);
+            if (CurrentOSVersion == OSVersion.WIN1011)
+                ShowMissingComponent("'.NET Framework 4.8.1'", NetFrameworkDownloadLink);
+            else
+                ShowMissingComponent("'.NET Framework 4.8'", NetFrameworkDownloadLink);
             Environment.Exit(2);
         }
     }
@@ -196,7 +202,8 @@ internal sealed class Program
         WINXP,
         WINVISTA,
         WIN7,
-        WIN810,
+        WIN8,
+        WIN1011,
         UNIX
     }
 
@@ -221,8 +228,11 @@ internal sealed class Program
             if (osVersion.Major == 6 && osVersion.Minor == 1)
                 return OSVersion.WIN7;
 
-            if (osVersion.Minor > 1 || osVersion.Major > 6)
-                return OSVersion.WIN810;
+            if (osVersion.Major == 6 && osVersion.Minor >= 2)
+                return OSVersion.WIN8;
+
+            if (osVersion.Major >= 10)
+                return OSVersion.WIN1011;
 
             return OSVersion.WIN7;
         }
@@ -253,11 +263,17 @@ internal sealed class Program
 
     private static void AutoRun()
     {
-        OSVersion osVersion = GetOperatingSystemVersion();
-        switch (osVersion)
+        switch (CurrentOSVersion)
         {
+            case OSVersion.WIN9X:
+            case OSVersion.WINXP:
+            case OSVersion.WINVISTA:
+                ShowUnsupportedOSMessage();
+                Environment.Exit(5);
+                break;
             case OSVersion.WIN7:
-            case OSVersion.WIN810:
+            case OSVersion.WIN8:
+            case OSVersion.WIN1011:
                 W7And10Autorun();
                 break;
             case OSVersion.UNIX:
@@ -337,7 +353,7 @@ internal sealed class Program
         };
 
         // Required on Win7 due to W^X causing issues there.
-        if (Environment.OSVersion.Platform == PlatformID.Win32NT && Environment.OSVersion.Version.Major == 6 && Environment.OSVersion.Version.Minor <= 1)
+        if (CurrentOSVersion == OSVersion.WIN7)
             processStartInfo.EnvironmentVariables["DOTNET_EnableWriteXorExecute"] = "0";
 
         using var _ = Process.Start(processStartInfo);
@@ -509,5 +525,14 @@ internal sealed class Program
         int installValueInt = installValue != null ? (int)installValue : 0;
 
         return installValueInt >= version;
+    }
+
+    private static void ShowUnsupportedOSMessage()
+    {
+        AdvancedMessageBoxHelper.ShowOkMessageBox(
+            "The client requires at least .NET Framework 4.8 to run, but it is not supported on your operating system." +
+            "Please consider upgrading to a newer version of Windows.",
+            "Unsupported Operating System",
+            okText: "Exit");
     }
 }
