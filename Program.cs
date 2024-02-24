@@ -277,8 +277,6 @@ internal sealed class Program
                 W7And10Autorun();
                 break;
             case OSVersion.UNIX:
-                RunUGL();
-                break;
             case OSVersion.UNKNOWN:
             default:
                 RunOGL();
